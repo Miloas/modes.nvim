@@ -12,8 +12,6 @@ local operator_started = false
 M.setup = function(options)
 	M.options = vim.tbl_deep_extend('force', {}, default_config, options or {})
 
-	vim.opt.cursorline = true
-
 	M.define_highlight_groups()
 	M.apply_highlights()
 
