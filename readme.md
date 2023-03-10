@@ -2,21 +2,22 @@
 
 > Prismatic line decorations for the adventurous vim user
 
-## Usage
-
-```lua
-use({
-	'mvllow/modes.nvim',
-	tag = 'v0.2.0',
-	config = function()
-		require('modes').setup()
-	end
-})
-```
+**Note: This is an experimental branch. Many features are missing from the main branch. Not recommended for personal use.**
 
 ![modes.nvim](https://user-images.githubusercontent.com/1474821/127896095-6da221cf-3327-4eed-82be-ce419bdf647c.gif)
 
-## Options
+## Install
+
+Use your favourite package manager. No setup required.
+
+```lua
+{
+	'mvllow/modes.nvim',
+	branch = "rancid-snake-oil"
+}
+```
+
+## Usage
 
 ```lua
 require('modes').setup({
@@ -27,21 +28,7 @@ require('modes').setup({
 		visual = "#9745be",
 	},
 
-	-- Set opacity for cursorline and number background
-	line_opacity = 0.15,
-
-	-- Enable cursor highlights
-	set_cursor = true,
-
-	-- Enable cursorline initially, and disable cursorline for inactive windows
-	-- or ignored filetypes
-	set_cursorline = true,
-
-	-- Enable line number highlights to match cursorline
-	set_number = true,
-
-	-- Disable modes highlights in specified filetypes
-	-- Please PR commonly ignored filetypes
+	-- Disable modes highlights for specific filetypes
 	ignore_filetypes = { 'NvimTree', 'TelescopePrompt' }
 })
 ```
