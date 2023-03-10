@@ -1,14 +1,14 @@
+> **Warning** This is an experimental, more opinionated alternative to the main branch. Do not expect feature parity. Not recommended for personal use.
+
 # modes.nvim
 
 > Prismatic line decorations for the adventurous vim user
-
-**Note: This is an experimental branch. Many features are missing from the main branch. Not recommended for personal use.**
 
 ![modes.nvim](https://user-images.githubusercontent.com/1474821/127896095-6da221cf-3327-4eed-82be-ce419bdf647c.gif)
 
 ## Install
 
-Use your favourite package manager. No setup required.
+Use your favourite package manager.
 
 ```lua
 {
@@ -20,6 +20,10 @@ Use your favourite package manager. No setup required.
 ## Usage
 
 ```lua
+-- Use default config
+require('modes').setup()
+
+-- Or
 require('modes').setup({
 	colors = {
 		copy = "#f5c359",
