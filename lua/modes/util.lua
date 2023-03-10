@@ -38,8 +38,9 @@ end
 ---@param group string
 ---@param color Color
 util.highlight = function(group, color)
-	local fg = color.fg
-	local bg = color.bg
+	local fg = color.fg or ''
+	local bg = color.bg or ''
+	local sp = color.sp or ''
 
 	if color.blend ~= nil and color.bg ~= nil then
 		bg = util.blend({
@@ -49,7 +50,7 @@ util.highlight = function(group, color)
 		})
 	end
 
-	vim.api.nvim_set_hl(0, group, { fg = fg, bg = bg })
+	vim.api.nvim_set_hl(0, group, { fg = fg, bg = bg, sp = sp })
 end
 
 ---@param name string
