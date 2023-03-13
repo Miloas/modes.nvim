@@ -16,14 +16,17 @@ local function to_rgb(color)
 	return { byte(result, 16), byte(result, 8), byte(result, 0) }
 end
 
----@param color Color
-util.blend = function(color)
-	local fg = to_rgb(color.fg)
-	local bg = to_rgb(color.bg)
-	local alpha = color.blend > 1 and color.blend / 100 or color.blend
+---@param fg string
+---@param bg string
+---@param alpha number
+---@return string
+util.blend = function(fg, bg, alpha)
+	local fg_rgb = to_rgb(fg)
+	local bg_rgb = to_rgb(bg)
+	alpha = alpha > 1 and alpha / 100 or alpha
 
 	local function blend_channel(i)
-		local ret = (alpha * fg[i] + ((1 - alpha) * bg[i]))
+		local ret = (alpha * fg_rgb[i] + ((1 - alpha) * bg_rgb[i]))
 		return math.floor(math.min(math.max(0, ret), 255) + 0.5)
 	end
 
@@ -42,30 +45,51 @@ util.highlight = function(group, color)
 	local bg = color.bg or ''
 	local sp = color.sp or ''
 
-	if color.blend ~= nil and color.bg ~= nil then
-		bg = util.blend({
-			fg = color.bg,
-			bg = util.get_hl_by_name('Normal').bg,
-			blend = color.blend,
-		})
+	local normal_bg = util.get_hl_by_name('Normal').bg
+
+	if color.fg_blend ~= nil and color.fg ~= nil then
+		fg = util.blend(color.fg, normal_bg, color.fg_blend)
+	end
+
+	if color.bg_blend ~= nil and color.bg ~= nil then
+		bg = util.blend(color.bg, normal_bg, color.bg_blend)
 	end
 
 	vim.api.nvim_set_hl(0, group, { fg = fg, bg = bg, sp = sp })
 end
 
----@param name string
+---@param group string
+---@param fallback Color|nil
 ---@return Color
-util.get_hl_by_name = function(name)
-	local id = vim.api.nvim_get_hl_id_by_name(name)
+util.get_hl_by_name = function(group, fallback)
+	local id = vim.api.nvim_get_hl_id_by_name(group)
 	if not id then
-		print('Unable to find to highlight group: ' .. name)
-		return { fg = '', bg = '' }
+		return fallback or { fg = '', bg = '' }
 	end
 
-	local foreground = vim.fn.synIDattr(id, 'fg') or ''
-	local background = vim.fn.synIDattr(id, 'bg') or ''
+	local fg = vim.fn.synIDattr(id, 'fg') or ''
+	local bg = vim.fn.synIDattr(id, 'bg') or ''
+	local fg_blend = nil
+	local bg_blend = nil
 
-	return { fg = foreground, bg = background }
+	-- Normlise modes colours
+	if
+		bg ~= ''
+		and fg == ''
+		and (
+			group == 'ModesCopy'
+			or group == 'ModesDelete'
+			or group == 'ModesInsert'
+			or group == 'ModesVisual'		-- or group == 'Visual'
+
+		)
+	then
+		fg = bg
+		fg_blend = 50
+		bg_blend = 15
+	end
+
+	return { fg = fg, bg = bg, fg_blend = fg_blend, bg_blend = bg_blend }
 end
 
 ---Replace terminal keycodes

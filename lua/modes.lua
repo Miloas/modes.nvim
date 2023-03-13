@@ -6,6 +6,7 @@ local M = {}
 M.options = {}
 M.default_highlights = {}
 
+local palette = {}
 local operator_started = false
 
 ---@param options Config|nil
@@ -20,6 +21,32 @@ M.setup = function(options)
 		pattern = '*',
 		callback = M.define_highlight_groups,
 	})
+
+	vim.api.nvim_create_autocmd('InsertEnter', {
+		pattern = '*',
+		callback = function()
+			util.highlight('CursorLine', {
+				fg = M.default_highlights.CursorLine.fg,
+				bg = util.get_hl_by_name(
+					'ModesInsert',
+					M.options.highlights.ModesInsert
+				).bg,
+			})
+		end,
+	})
+
+	vim.api.nvim_create_autocmd('ModeChanged', {
+		pattern = '[vV\x16]:n',
+		callback = M.reset_highlights,
+	})
+
+	vim.api.nvim_create_autocmd(
+		{ 'CmdlineLeave', 'InsertLeave', 'TextYankPost', 'WinLeave' },
+		{
+			pattern = '*',
+			callback = M.reset_highlights,
+		}
+	)
 end
 
 M.reset_highlights = function()
@@ -27,13 +54,60 @@ M.reset_highlights = function()
 	operator_started = false
 end
 
--- TODO: Use theme definitions if available
+-- TODO: Update config priority
+-- current: theme -> default config
+-- desired: user config -> theme -> default config
 M.define_highlight_groups = function()
-	util.highlight('ModesCopy', M.options.highlight_groups.ModesCopy)
-	util.highlight('ModesDelete', M.options.highlight_groups.ModesDelete)
-	util.highlight('ModesInsert', M.options.highlight_groups.ModesInsert)
-	util.highlight('ModesVisual', M.options.highlight_groups.ModesVisual)
-	util.highlight('Visual', M.options.highlight_groups.ModesVisual)
+	palette = {
+		copy = util.get_hl_by_name('ModesCopy', M.options.highlights.ModesCopy),
+		delete = util.get_hl_by_name(
+			'ModesDelete',
+			M.options.highlights.ModesDelete
+		),
+		insert = util.get_hl_by_name(
+			'ModesInsert',
+			M.options.highlights.ModesInsert
+		),
+		visual = util.get_hl_by_name(
+			'ModesVisual',
+			M.options.highlights.ModesVisual
+		),
+	}
+
+	util.highlight('ModesCopy', palette.copy)
+	util.highlight('ModesCopyCursor', {
+		bg = util.get_hl_by_name('ModesCopy', M.options.highlights.ModesCopy).fg,
+	})
+	util.highlight('ModesDelete', palette.delete)
+	util.highlight('ModesDeleteCursor', {
+		bg = util.get_hl_by_name(
+			'ModesDelete',
+			M.options.highlights.ModesDelete
+		).fg,
+	})
+	util.highlight('ModesInsert', palette.insert)
+	util.highlight('ModesInsertCursor', {
+		bg = util.get_hl_by_name(
+			'ModesInsert',
+			M.options.highlights.ModesInsert
+		).fg,
+	})
+	util.highlight('ModesOperator', {})
+	util.highlight('ModesOperatorCursor', {})
+	util.highlight('ModesVisual', palette.visual)
+	util.highlight('ModesVisualCursor', {
+		bg = util.get_hl_by_name(
+			'ModesVisual',
+			M.options.highlights.ModesVisual
+		).fg,
+	})
+	util.highlight('Visual', {
+		fg = palette.visual.fg,
+		bg = util.get_hl_by_name(
+			'ModesVisual',
+			M.options.highlights.ModesVisual
+		).bg,
+	})
 
 	M.default_highlights = {
 		CursorLine = util.get_hl_by_name('CursorLine'),
@@ -45,14 +119,14 @@ M.apply_highlights = function()
 	-- Block cursor shape
 	-- TODO: Respect custom cursor shapes
 	if vim.api.nvim_get_option('guicursor') == '' then
-		vim.opt.guicursor:append('v-sm:block-ModesVisual')
-		vim.opt.guicursor:append('i-ci-ve:block-ModesInsert')
-		vim.opt.guicursor:append('r-cr-o:block-ModesOperator')
+		vim.opt.guicursor:append('v-sm:block-ModesVisualCursor')
+		vim.opt.guicursor:append('i-ci-ve:block-ModesInsertCursor')
+		vim.opt.guicursor:append('r-cr-o:block-ModesOperatorCursor')
 	else
 		-- Default cursor shapes
-		vim.opt.guicursor:append('v-sm:block-ModesVisual')
-		vim.opt.guicursor:append('i-ci-ve:ver25-ModesInsert')
-		vim.opt.guicursor:append('r-cr-o:hor20-ModesOperator')
+		vim.opt.guicursor:append('v-sm:block-ModesVisualCursor')
+		vim.opt.guicursor:append('i-ci-ve:ver25-ModesInsertCursor')
+		vim.opt.guicursor:append('r-cr-o:hor20-ModesOperatorCursor')
 	end
 
 	vim.on_key(function(key)
@@ -70,27 +144,37 @@ M.apply_highlights = function()
 			end
 
 			if key == 'y' then
-				util.highlight(
-					'CursorLine',
-					M.options.highlight_groups.ModesCopy
-				)
-				util.highlight(
-					'ModesOperator',
-					{ bg = M.options.highlight_groups.ModesCopy.fg }
-				)
+				util.highlight('CursorLine', {
+					fg = palette.copy.fg,
+					bg = util.get_hl_by_name(
+						'ModesCopy',
+						M.options.highlights.ModesCopy
+					).bg,
+				})
+				util.highlight('ModesOperatorCursor', {
+					bg = util.get_hl_by_name(
+						'ModesCopy',
+						M.options.highlights.ModesCopy
+					).fg,
+				})
 				operator_started = true
 				return
 			end
 
 			if key == 'd' then
-				util.highlight(
-					'CursorLine',
-					M.options.highlight_groups.ModesDelete
-				)
-				util.highlight(
-					'ModesOperator',
-					{ bg = M.options.highlight_groups.ModesDelete.fg }
-				)
+				util.highlight('CursorLine', {
+					fg = palette.delete.fg,
+					bg = util.get_hl_by_name(
+						'ModesDelete',
+						M.options.highlights.ModesDelete
+					).bg,
+				})
+				util.highlight('ModesOperatorCursor', {
+					bg = util.get_hl_by_name(
+						'ModesDelete',
+						M.options.highlights.ModesDelete
+					).fg,
+				})
 				operator_started = true
 				return
 			end
